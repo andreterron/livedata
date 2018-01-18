@@ -1,9 +1,9 @@
 {
-  "name": "livedata",
+  "name": "live-model",
   "version": "0.0.1",
-  "description": "LiveData",
+  "description": "Live Model",
   "main": "index.js",
-  "repository": "git@github.com:andreterron/livedata.git",
+  "repository": "git@github.com:andreterron/live-model.git",
   "author": "André Terron <andrev.terron@gmail.com>",
   "license": "MIT",
   "devDependencies": {

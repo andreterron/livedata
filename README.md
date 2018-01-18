@@ -1,2 +1,2 @@
-# livedata
-LiveData
+# live-model
+Live Model
