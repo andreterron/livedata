@@ -1,5 +1,5 @@
 import { BaseLiveObject } from './../base/base-live-object';
-import { RelationsDefinition, ILiveObject, ILiveList } from './../interfaces';
+import { RelationsDefinition, LiveObject, LiveList } from './../interfaces';
 import { BaseDataManager } from '../base/base-data-manager';
 import * as firebase from 'firebase';
 import { FirestoreQueryLiveList } from './firestore-query-live-list';
@@ -51,7 +51,7 @@ export class FirestoreDataManager extends BaseDataManager {
         return this.rootRef.collection(type);
     }
 
-    liveObject<T>(type: string, id: string, options?: any): ILiveObject<T> {
+    liveObject<T>(type: string, id: string, options?: any): LiveObject<T> {
         return new FirestoreLiveObject(this, type, {subscribeOnce: (subscriber) => {
             return this.getCollection(type, options).doc(id).onSnapshot({
                 next: (snap) => {
@@ -62,10 +62,10 @@ export class FirestoreDataManager extends BaseDataManager {
             });
         }}, id, options);
     }
-    liveQuery<T>(type: string, query?: any, options?: any): ILiveList<T> {
+    liveQuery<T>(type: string, query?: any, options?: any): LiveList<T> {
         return new FirestoreQueryLiveList<T>(this, this.rootRef, type, query, options);
     }
-    toOne<T>(type: string, obj: any, relationName: string, options?: any): ILiveObject<T> {
+    toOne<T>(type: string, obj: any, relationName: string, options?: any): LiveObject<T> {
         let relation = this.relations[type][relationName];
         if (relation.to === 'one') {
             
@@ -95,7 +95,7 @@ export class FirestoreDataManager extends BaseDataManager {
         throw new Error('toOne not yet implemented');
         // return null;
     }
-    toMany<T>(type: string, obj: any, relationName: string, options?: any): ILiveList<T> {
+    toMany<T>(type: string, obj: any, relationName: string, options?: any): LiveList<T> {
         let relation = this.relations[type][relationName];
         if (relation.to === 'many') {
             if (relation.method === 'sub-collection') {

@@ -1,4 +1,4 @@
-import { RelationsDefinition, RelationSide, ILiveList, ILiveObject } from './../interfaces/';
+import { RelationsDefinition, RelationSide, LiveList, LiveObject } from './../interfaces/';
 import { WrapLiveObject } from './wrap-live-object';
 import { WrapLiveList } from './wrap-live-list';
 import { TeardownLogic } from 'rxjs/Subscription';
@@ -175,7 +175,7 @@ export abstract class BaseDataManager {
         this.relations = normalizeRelations(relations, options);
     }
 
-    objToOne<T>(type: string, obj: ILiveObject<any>, relationName: string, options?: any): ILiveObject<T> {
+    objToOne<T>(type: string, obj: LiveObject<any>, relationName: string, options?: any): LiveObject<T> {
         return new WrapLiveObject<T>((setChild, subscriber): TeardownLogic => {
             var lastObj: T;
             return obj.subscribe((next: T) => {
@@ -188,7 +188,7 @@ export abstract class BaseDataManager {
         });
     }
 
-    objToMany<T>(type: string, obj: ILiveObject<any>, relationName: string, options?: any): ILiveList<T> {
+    objToMany<T>(type: string, obj: LiveObject<any>, relationName: string, options?: any): LiveList<T> {
         return new WrapLiveList<T>((setChild, subscriber): TeardownLogic => {
             var lastObj: T;
             return obj.subscribe((next: T) => {
@@ -205,10 +205,10 @@ export abstract class BaseDataManager {
         return obj;
     }
     
-    abstract liveObject<T>(type: string, id: string, options?: any): ILiveObject<T>
-    abstract liveQuery<T>(type: string, query?: any, options?: any): ILiveList<T>
-    abstract toMany<T>(type: string, obj: any, relationName: string, options?: any): ILiveList<T>
-    abstract toOne<T>(type: string, obj: any, relationName: string, options?: any): ILiveObject<T>
+    abstract liveObject<T>(type: string, id: string, options?: any): LiveObject<T>
+    abstract liveQuery<T>(type: string, query?: any, options?: any): LiveList<T>
+    abstract toMany<T>(type: string, obj: any, relationName: string, options?: any): LiveList<T>
+    abstract toOne<T>(type: string, obj: any, relationName: string, options?: any): LiveObject<T>
 
     abstract save(type: string, obj: any, options?: any): Promise<any>
     abstract create(type: string, obj: any, options?: any): Promise<any>

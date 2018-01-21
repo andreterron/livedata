@@ -41,10 +41,10 @@ export class FirestoreOneToManyLiveList<T> extends FirestoreQueryLiveList<T> {
     // TODO: fetch results at least once to update nextIndex
     async add(obj: T, extra?: any): Promise<any> {
         if (this.nextIndex === undefined) {
-            if (!this.lastData) {
+            if (!this.data) {
                 await this.once();
             }
-            this.nextIndex = this.lastData.length;
+            this.nextIndex = this.data.length;
         }
         obj[this.relation.foreignField] = this.srcRef;
         if (this.relation.indexField) {
@@ -58,10 +58,10 @@ export class FirestoreOneToManyLiveList<T> extends FirestoreQueryLiveList<T> {
     }
     async create(data: any, extra?: any, options?: any): Promise<T> {
         if (this.nextIndex === undefined) {
-            if (!this.lastData) {
+            if (!this.data) {
                 await this.once();
             }
-            this.nextIndex = this.lastData.length;
+            this.nextIndex = this.data.length;
         }
         data[this.relation.foreignField] = this.srcRef;
         if (this.relation.indexField) {
@@ -72,7 +72,7 @@ export class FirestoreOneToManyLiveList<T> extends FirestoreQueryLiveList<T> {
     }
     async reorder(list: T[], addOrRemove?: boolean): Promise<any> {
         if (this.relation && this.relation.indexField) {
-            let ids = this.lastData.map(item => item['id']);
+            let ids = this.data.map(item => item['id']);
             this.nextIndex = list.length;
             let batch = this.rootRef.firestore.batch();
             for (var i = 0; i < list.length; i++) {

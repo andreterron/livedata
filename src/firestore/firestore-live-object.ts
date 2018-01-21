@@ -15,7 +15,7 @@ export class FirestoreLiveObject<T> extends BaseLiveObject<T> {
         return super.delete(options);
     }
 
-    // toMany<R>(relationName: string, options?: any): ILiveList<R>
-    // toOne<R>(relationName: string, options?: any): ILiveObject<R>
-    // createIfNone(create: () => Promise<T>): ILiveObject<T>
+    // toMany<R>(relationName: string, options?: any): LiveList<R>
+    // toOne<R>(relationName: string, options?: any): LiveObject<R>
+    // createIfNone(create: () => Promise<T>): LiveObject<T>
 }

@@ -1,5 +1,5 @@
 import { BaseDataManager } from '../../src/base/base-data-manager';
-import { ILiveObject } from '../../src';
+import { LiveObject } from '../../src';
 
 import * as mocha from 'mocha';
 import * as chai from 'chai';

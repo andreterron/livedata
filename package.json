@@ -1,8 +1,20 @@
 {
   "name": "live-model",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Live Model",
   "main": "index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "test-w": "mocha --reporter spec --require ts-node/register 'tests/**/*.test.{ts,js}' -w --watch-extensions js,ts",
+    "test": "mocha --reporter spec --require ts-node/register 'tests/**/*.test.{ts,js}'"
+  },
+  "keywords": [
+    "live",
+    "model",
+    "data",
+    "rx",
+    "observable"
+  ],
   "repository": "git@github.com:andreterron/live-model.git",
   "author": "André Terron <andrev.terron@gmail.com>",
   "license": "MIT",
@@ -20,7 +32,7 @@
     "chai-as-promised": "^7.1.1",
     "core-js": "^2.5.1",
     "mocha": "^4.0.1",
-    "sinon": "^4.1.2",
+    "sinon": "4.1.2",
     "sinon-chai": "^2.14.0",
     "ts-node": "^3.3.0",
     "typescript": "^2.6.2"

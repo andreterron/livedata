@@ -3,7 +3,7 @@ import { BaseDataManager } from "../base/base-data-manager";
 import { firestore } from 'firebase';
 import { RelationSide } from "../interfaces/relations.interface";
 import { mergeQueries } from "../utils/merge-queries";
-import { ILiveObject } from "../index";
+import { LiveObject } from "../index";
 
 export class FirestoreSubCollectionLiveList<T> extends FirestoreQueryLiveList<T> {
     constructor(
@@ -26,7 +26,7 @@ export class FirestoreSubCollectionLiveList<T> extends FirestoreQueryLiveList<T>
         // }, options);
     }
 
-    toId(id: string, options?: any): ILiveObject<T> {
+    toId(id: string, options?: any): LiveObject<T> {
         return this.dataManager.liveObject(this.relation.type, id, Object.assign({}, options, {collectionRef: this.collectionRef()}));
     }
 

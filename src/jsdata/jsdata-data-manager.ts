@@ -1,5 +1,5 @@
 import { BaseLiveObject } from './../base/base-live-object';
-import { RelationsDefinition, ILiveObject, ILiveList } from './../interfaces';
+import { RelationsDefinition, LiveObject, LiveList } from './../interfaces';
 import { JSDataOneToManyLiveList } from './jsdata-one-to-many-live-list';
 import { SimpleStore, DataStore } from 'js-data';
 import { JSDataQueryLiveList } from './jsdata-query-live-list';
@@ -70,13 +70,13 @@ export class JSDataDataManager extends BaseDataManager {
         });
     }
 
-    liveObject<T>(type: string, id: string, options?: any): ILiveObject<T> {
+    liveObject<T>(type: string, id: string, options?: any): LiveObject<T> {
         return new JSDataIdLiveObject<T>(this.store, this, type, id, options);
     }
-    liveQuery<T>(type: string, query?: any, options?: any): ILiveList<T> {
+    liveQuery<T>(type: string, query?: any, options?: any): LiveList<T> {
         return new JSDataQueryLiveList<T>(this, this.store, type, query, options);
     }
-    toOne<T>(type: string, obj: any, relationName: string, options?: any): ILiveObject<T> {
+    toOne<T>(type: string, obj: any, relationName: string, options?: any): LiveObject<T> {
         let relation = this.relations[type][relationName];
         if (relation.to === 'one') {
             return new JSDataOneToManyLiveList<T>(
@@ -93,7 +93,7 @@ export class JSDataDataManager extends BaseDataManager {
         }
         return null;
     }
-    toMany<T>(type: string, obj: any, relationName: string, options?: any): ILiveList<T> {
+    toMany<T>(type: string, obj: any, relationName: string, options?: any): LiveList<T> {
         let relation = this.relations[type][relationName];
         if (relation.to === 'many') {
             if (relation.edge) { // manyToMany

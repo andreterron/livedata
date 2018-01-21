@@ -30,7 +30,7 @@ describe('BaseLiveObject', () => {
     let complete = sandbox.spy();
 
     let resetMain = () => {
-        sandbox.reset();
+        sandbox.reset(); // DEPRECATED: find replacement
         childObj.subscribe.resetHistory();
         childObj2.subscribe.resetHistory();
     }
@@ -62,7 +62,7 @@ describe('BaseLiveObject', () => {
             let refresh = sinon.stub();
             refresh.onCall(0).resolves(null);
             refresh.resolves(mockObj);
-            let empty = new BaseLiveObject(dm, 'type', undefined, undefined, refresh)
+            let empty = new BaseLiveObject(dm, 'type', {refresh})
             let obj = empty.createIfNone(create);
 
             obj.subscribe(next, err, complete);
@@ -91,7 +91,7 @@ describe('BaseLiveObject', () => {
             let refresh = sinon.stub();
             refresh.onCall(0).resolves(null);
             refresh.resolves(mockObj);
-            let empty = new BaseLiveObject(dm, 'type', undefined, undefined, refresh)
+            let empty = new BaseLiveObject(dm, 'type', {refresh})
             let obj = empty.createIfNone(create);
 
             // Execution

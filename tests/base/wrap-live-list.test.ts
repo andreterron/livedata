@@ -57,30 +57,35 @@ describe('Wrap Live List', () => {
     //     // Teardown
     //     childList.subscribe.resetHistory();
     // });
+    class TestWrapLiveList<T> extends WrapLiveList<T> {
+        subscribersLength() {
+            return this.subscribers.length
+        }
+    }
 
     ['refresh', 'create', 'add', 'save', 'reorder', 'remove', 'delete'].forEach((method) => {
-        it(`should subscribe and call ${method} on the child object when ${method} called`, () => {
+        it(`should subscribe and call ${method} on the child object when ${method} called`, async () => {
             childList[method] = sinon.stub().resolves();
             // childList2[method] = sinon.stub().resolves();
-            let obj = new WrapLiveList((setLiveObject, subscriber) => {
+            let obj = new TestWrapLiveList((setLiveObject, subscriber) => {
                 setLiveObject(childList);
             });
 
-            return obj[method](mockObj).then(() => {
-                expect(obj.subscribers.length, 'temporary subscriber still subscribed').to.be.equal(0);
-                // if (method === 'delete') {
-                //     expect(childList2.subscribe, 'subscribe2 not called once').to.be.calledOnce
-                //     expect(childList.subscribe, 'subscribe called').to.not.be.called
-                // } else {
-                //     expect(childList.subscribe, 'subscribe not called once').to.be.calledOnce
-                //     expect(childList2.subscribe, 'subscribe2 called').to.not.be.called
-                // }
-                expect(childList[method], `${method} not called`).to.be.called;
-    
-                // Teardown
-                childList.subscribe.resetHistory();
-                childList[method].resetHistory();
-            });
+            await obj[method](mockObj)//.then(() => {
+            expect(obj.subscribersLength(), 'temporary subscriber still subscribed').to.be.equal(0);
+            // if (method === 'delete') {
+            //     expect(childList2.subscribe, 'subscribe2 not called once').to.be.calledOnce
+            //     expect(childList.subscribe, 'subscribe called').to.not.be.called
+            // } else {
+            //     expect(childList.subscribe, 'subscribe not called once').to.be.calledOnce
+            //     expect(childList2.subscribe, 'subscribe2 called').to.not.be.called
+            // }
+            expect(childList[method], `${method} not called`).to.be.called;
+
+            // Teardown
+            childList.subscribe.resetHistory();
+            childList[method].resetHistory();
+            // });
         });
     });
 

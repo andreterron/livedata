@@ -1,13 +1,21 @@
 import { LiveDataObservable } from "./live-data-observable";
-import { ILiveList, ILiveObject } from "../interfaces";
+import { LiveList, LiveObject } from "../interfaces";
 import { Subscription, TeardownLogic, AnonymousSubscription } from "rxjs/Subscription";
 import { Subscriber } from "rxjs/Subscriber";
 import { Observable } from "rxjs/Observable";
 import { WrapLiveObject } from "./wrap-live-object";
-import { WrapObservable } from "./wrap-observable";
+import { WrapLiveModel } from "./wrap-live-model";
 
 
-export class WrapLiveList<T> extends WrapObservable<T[], T, ILiveList<T>> implements ILiveList<T> {
+export class WrapLiveList<T> extends WrapLiveModel<T[], T, LiveList<T>> implements LiveList<T> {
+
+    liveObjects: Observable<LiveObject<T>[]> = this.childObservable.switchMap(() => {
+        if (this.child) {
+            return this.child.liveObjects;
+        } else {
+            return Observable.of([]);
+        }
+    });
 
     subscribeToChild(): TeardownLogic[] {
         return [this.child.subscribe((n) => this.alert(n), (err) => this.alertError(err))];
@@ -56,19 +64,7 @@ export class WrapLiveList<T> extends WrapObservable<T[], T, ILiveList<T>> implem
         }
         return this.waitForChild().then(() => this.child.delete(obj, options));
     }
-    mapToOne<R>(relationName: string, options?: any): ILiveList<R> {
-        return new WrapLiveList<R>((setList, subscriber) => {
-            return this.childObservable.subscribe(() => {
-                if (this.child) {
-                    setList(this.child.mapToOne(relationName, options));
-                } else {
-                    console.error('no child after child observable');
-                    subscriber.next([]);
-                }
-            });
-        });
-    }
-    index(index: number): ILiveObject<T> {
+    index(index: number): LiveObject<T> {
         return new WrapLiveObject<T>((setObj, subscriber) => {
             return this.childObservable.subscribe(() => {
                 if (this.child) {
@@ -80,8 +76,7 @@ export class WrapLiveList<T> extends WrapObservable<T[], T, ILiveList<T>> implem
             });
         });
     }
-
-    toId(id: string, options?: any): ILiveObject<T> {
+    toId(id: string, options?: any): LiveObject<T> {
         return new WrapLiveObject<T>((setObj, subscriber) => {
             return this.childObservable.subscribe(() => {
                 if (this.child) {

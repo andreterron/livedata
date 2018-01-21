@@ -1,5 +1,5 @@
 import { } from 'rxjs/Rx';
-import { ILiveList, ILiveObject } from "../interfaces";
+import { LiveList, LiveObject, LiveModel } from "../interfaces";
 import { Observable } from "rxjs/Observable";
 import { Subscriber } from "rxjs/Subscriber";
 import { TeardownLogic, Subscription } from "rxjs/Subscription";
@@ -12,17 +12,15 @@ import { RefreshMethods } from '../interfaces/refresh-methods.interface';
 
 
 
-export abstract class BaseLiveList<T> extends LiveDataObservable<T[]> implements ILiveList<T> {
+export abstract class BaseLiveList<T> extends LiveModel<T[]> implements LiveList<T> {
 
     constructor(protected dataManager: BaseDataManager, public type: string, methods?: RefreshMethods<T[]>) {
         super(methods);
     }
 
-    mapToOne<R>(relationName: string, options?: any): ILiveList<R> {
-        return new CombinedLiveList(this, (obj: T) => this.dataManager.toOne(this.type, obj, relationName, options));
-    }
+    liveObjects: Observable<LiveObject<T>[]> = null;
 
-    index(index: number): ILiveObject<T> {
+    index(index: number): LiveObject<T> {
         let obj = new BaseLiveObject<T>(this.dataManager, this.type, {subscribeOnce: (subscriber) => {
             let teardown = this.subscribe(n => {
                 if (n[index]) {
@@ -38,7 +36,7 @@ export abstract class BaseLiveList<T> extends LiveDataObservable<T[]> implements
         return obj;
     }
 
-    toId(id: string, options?: any): ILiveObject<T> {
+    toId(id: string, options?: any): LiveObject<T> {
         return this.dataManager.liveObject(this.type, id, options);
     }
     

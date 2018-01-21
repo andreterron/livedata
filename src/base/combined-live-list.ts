@@ -1,5 +1,5 @@
 import { } from 'rxjs/Rx';
-import { ILiveList, ILiveObject } from "../interfaces";
+import { LiveList, LiveObject, LiveModel } from "../interfaces";
 import { Observable } from "rxjs/Observable";
 import { Subscriber } from "rxjs/Subscriber";
 import { TeardownLogic, Subscription } from "rxjs/Subscription";
@@ -8,38 +8,36 @@ import { BaseDataManager } from "./base-data-manager";
 import { BaseLiveObject } from './base-live-object';
 import { WrapLiveObject } from './wrap-live-object';
 
-export class CombinedLiveList<S, T> extends LiveDataObservable<T[]> implements ILiveList<T> {
+export class CombinedLiveList<S, T> extends LiveModel<T[]> implements LiveList<T> {
 
+    public liveObjects: Observable<LiveObject<T>[]> = this.sourceLiveList.live.map(list => list.map((n) => this.mapFn(n)));
     private sourceList: S[];
     private sourceMap: {[key:string]: S} = {};
     private sourceDestMap: object = {}; // id to id
     private destSourceMap: object = {}; // id to id
-    
-    once(): Promise<T[]> {
-        return this.first().toPromise();
-    }
 
-    constructor(public sourceLiveList: ILiveList<S>, public mapFn: (obj: S) => ILiveObject<T>) {
-        super({subscribeOnce: (subscriber) => {
-            return this.sourceLiveList.subscribe((srcList) => {
-                this.sourceList = srcList;
-                let observable = Observable.combineLatest(srcList.map((n) => this.mapFn(n)));
-                observable.first((t) => !!t.length).toPromise().then((destList) => {
-                    if (srcList.length === destList.length) {
-                        for (var i = 0; i < srcList.length; i++) {
-                            this.sourceMap[srcList[i]['id']] = srcList[i];
-                            this.sourceDestMap[srcList[i]['id']] = destList[i]['id'];
-                            this.sourceDestMap[destList[i]['id']] = srcList[i]['id'];
-                        }
-                    }
-                });
-                return observable.subscribe(subscriber);
-            }, (e) => {subscriber.error(e)}, () => {subscriber.complete()});
-        }});
+    constructor(public sourceLiveList: LiveList<S>, public mapFn: (obj: S) => LiveObject<T>) {
+        super({observable: () => this.liveObjects.switchMap(list => Observable.combineLatest(list.map(o => o.live)))
+            // return this.sourceLiveList.subscribe((srcList) => {
+            //     this.sourceList = srcList;
+            //     let observable = Observable.combineLatest(srcList.map((n) => this.mapFn(n)));
+            //     observable.first((t) => !!t.length).toPromise().then((destList) => {
+            //         if (srcList.length === destList.length) {
+            //             for (var i = 0; i < srcList.length; i++) {
+            //                 this.sourceMap[srcList[i]['id']] = srcList[i];
+            //                 this.sourceDestMap[srcList[i]['id']] = destList[i]['id'];
+            //                 this.sourceDestMap[destList[i]['id']] = srcList[i]['id'];
+            //             }
+            //         }
+            //     });
+            //     return observable.subscribe(subscriber);
+            // }, (e) => {subscriber.error(e)}, () => {subscriber.complete()});
+        });
+
     }
 
     refresh(): Promise<T[]> {
-        return this.sourceLiveList.refresh().then((sources) => Promise.all(sources.map((n) => this.mapFn(n).first((t) => !!t).toPromise())));
+        return this.sourceLiveList.refresh().then((sources) => Promise.all(sources.map((n) => this.mapFn(n).live.first((t) => !!t).toPromise())));
     }
     
     create(data: any, extra?: any, options?: any): Promise<T> {
@@ -91,11 +89,11 @@ export class CombinedLiveList<S, T> extends LiveDataObservable<T[]> implements I
         return Promise.resolve(); // Object not found on list, already deleted probably;
         // return Promise.reject("Couldn't remove object, because it wasn't found on this list");
     }
-    mapToOne<R>(relationName: string, options?: any): ILiveList<R> {
-        return new CombinedLiveList(this.sourceLiveList, (obj:S) => this.mapFn(obj).toOne(relationName, options));
-    }
+    // liveObjects(options?: any): Observable<LiveObject<T>[]> {
+    //     throw new Error('Not Implemented');
+    // }
 
-    index(index: number): ILiveObject<T> {
+    index(index: number): LiveObject<T> {
         return new WrapLiveObject<T>((setObj, subscriber) => {
             return this.sourceLiveList.subscribe((list) => {
                 if (list && list[index]) {
@@ -107,7 +105,7 @@ export class CombinedLiveList<S, T> extends LiveDataObservable<T[]> implements I
         });
     }
 
-    toId(id: string, options?: any): ILiveObject<T> {
+    toId(id: string, options?: any): LiveObject<T> {
         if (this.destSourceMap && this.destSourceMap[id] && this.sourceMap[this.destSourceMap[id]]) {
             return this.mapFn(this.sourceMap[this.destSourceMap[id]]);
         }

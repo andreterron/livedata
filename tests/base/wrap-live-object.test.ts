@@ -43,16 +43,22 @@ describe('Wrap Live Object', () => {
         complete.reset();
     }
 
+    class TestWrapLiveObject<T> extends WrapLiveObject<T> {
+        subscribersLength() {
+            return this.subscribers.length
+        }
+    }
+
     ['refresh', 'save', 'delete'].forEach((method) => {
         it(`should subscribe and call ${method} on the child object when ${method} is called`, () => {
-            let obj = new WrapLiveObject((setLiveObject, subscriber) => {
+            let obj = new TestWrapLiveObject((setLiveObject, subscriber) => {
                 setLiveObject(childObj);
             });
             childObj[method].withArgs(mockObj).resolves(mockObj);
             return obj[method](mockObj).then(() => {
                 expect(childObj.subscribe, 'subscribe not called once').to.be.calledOnce
                 expect(childObj[method], `${method} not called`).to.be.called;
-                expect(obj.subscribers.length, 'temporary subscriber still subscribed').to.be.equal(0);
+                expect(obj.subscribersLength(), 'temporary subscriber still subscribed').to.be.equal(0);
     
                 // Teardown
                 childObj.subscribe.resetHistory();

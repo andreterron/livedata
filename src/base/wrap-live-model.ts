@@ -1,22 +1,22 @@
 import { TeardownLogic, AnonymousSubscription, Subscription } from "rxjs/Subscription";
 import { LiveDataObservable } from "./live-data-observable";
-import { ILiveObject, ILiveList } from "../interfaces";
+import { LiveObject, LiveList, LiveModel } from "../interfaces";
 import { Subscriber } from "rxjs/Subscriber";
 import { Observable } from "rxjs/Observable";
 import { Promise } from 'bluebird';
 
-export abstract class WrapObservable<T, S, L extends ILiveList<S> | ILiveObject<S>> extends LiveDataObservable<T> {
-    childReceivedSubscription: Subscription;
+export abstract class WrapLiveModel<T, S, L extends LiveList<S> | LiveObject<S>> extends LiveModel<T> {
+    childReceivedSubscription: AnonymousSubscription;
     public child: L = null;
-    protected childPromise = new Promise((resolve, reject) => {
+    protected childPromise = new Promise<void>((resolve, reject) => {
         this.resolveChildPromise = resolve;
     });
 
     public childSubscriptions: TeardownLogic[] = [];
     public childSubscribers: Subscriber<L>[] = [];
-    private resolveChildPromise: (value?: {} | PromiseLike<{}>) => void;
+    private resolveChildPromise: (value?: void | PromiseLike<void>) => void;
 
-    constructor(subscribe: (setChild: (list: L, subscribe?: (wrap: WrapObservable<T, S, L>, subscriber: Subscriber<T>) => TeardownLogic) => L, subscriber: Subscriber<T>) => TeardownLogic) {
+    constructor(subscribe: (setChild: (list: L, subscribe?: (wrap: WrapLiveModel<T, S, L>, subscriber: Subscriber<T>) => TeardownLogic) => L, subscriber: Subscriber<T>) => TeardownLogic) {
         super({subscribeOnce: (subscriber) => {
             return subscribe(this.setChild.bind(this), subscriber);
         }});
@@ -35,7 +35,6 @@ export abstract class WrapObservable<T, S, L extends ILiveList<S> | ILiveObject<
             // }
         });
         // this.refresh();
-        // console.log('WRAP - child sub');
         if (this.child) {
             subscriber.next(this.child);
         } else if (!this.childReceivedSubscription) {
@@ -44,14 +43,14 @@ export abstract class WrapObservable<T, S, L extends ILiveList<S> | ILiveObject<
         return subscriber;
     });
 
-    private setChild(child: L, subscribe?: (wrap: WrapObservable<T, S, L>, subscriber: Subscriber<T>) => TeardownLogic) {
+    private setChild(child: L, subscribe?: (wrap: WrapLiveModel<T, S, L>, subscriber: Subscriber<T>) => TeardownLogic) {
         this.resetCache();
         this.childSubscriptions.forEach(s => {
             if (s) {
-                if ((s as AnonymousSubscription).unsubscribe) {
-                    (s as AnonymousSubscription).unsubscribe();
+                if (typeof s === 'function') {
+                    s()
                 } else {
-                    (s as Function)();
+                    s.unsubscribe();
                 }
             }
         }); // Teardown previous subscriptions
@@ -74,7 +73,7 @@ export abstract class WrapObservable<T, S, L extends ILiveList<S> | ILiveObject<
 
     waitForChild(): Promise<any> {
         if (!this.subscribers.length && !this.childReceivedSubscription) {
-            this.childReceivedSubscription = this.first().subscribe();
+            this.childReceivedSubscription = this.live.first().subscribe();
         }
         return this.childPromise;
     }
