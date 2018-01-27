@@ -2,14 +2,14 @@ import { LiveDataObservable } from "./live-data-observable";
 import { LiveList, LiveObject } from "../interfaces";
 import { Subscription, TeardownLogic, AnonymousSubscription } from "rxjs/Subscription";
 import { Subscriber } from "rxjs/Subscriber";
-import { Observable } from "rxjs/Observable";
+import { Observable, Subscribable } from "rxjs/Observable";
 import { WrapLiveObject } from "./wrap-live-object";
 import { WrapLiveModel } from "./wrap-live-model";
 
 
 export class WrapLiveList<T> extends WrapLiveModel<T[], T, LiveList<T>> implements LiveList<T> {
 
-    liveObjects: Observable<LiveObject<T>[]> = this.childObservable.switchMap(() => {
+    liveObjects: Subscribable<LiveObject<T>[]> = this.childObservable.switchMap(() => {
         if (this.child) {
             return this.child.liveObjects;
         } else {

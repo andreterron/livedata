@@ -1,6 +1,6 @@
 import { } from 'rxjs/Rx';
 import { LiveList, LiveObject, LiveModel } from "../interfaces";
-import { Observable } from "rxjs/Observable";
+import { Observable, Subscribable } from "rxjs/Observable";
 import { Subscriber } from "rxjs/Subscriber";
 import { TeardownLogic, Subscription } from "rxjs/Subscription";
 import { LiveDataObservable } from "./live-data-observable";
@@ -18,7 +18,7 @@ export abstract class BaseLiveList<T> extends LiveModel<T[]> implements LiveList
         super(methods);
     }
 
-    liveObjects: Observable<LiveObject<T>[]> = null;
+    liveObjects: Subscribable<LiveObject<T>[]> = null;
 
     index(index: number): LiveObject<T> {
         let obj = new BaseLiveObject<T>(this.dataManager, this.type, {subscribeOnce: (subscriber) => {

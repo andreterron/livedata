@@ -7,17 +7,18 @@ import { LiveDataObservable } from "./live-data-observable";
 import { BaseDataManager } from "./base-data-manager";
 import { BaseLiveObject } from './base-live-object';
 import { WrapLiveObject } from './wrap-live-object';
+import { Subscribable } from 'rxjs/Observable';
 
 export class CombinedLiveList<S, T> extends LiveModel<T[]> implements LiveList<T> {
 
-    public liveObjects: Observable<LiveObject<T>[]> = this.sourceLiveList.live.map(list => list.map((n) => this.mapFn(n)));
+    public liveObjects: Subscribable<LiveObject<T>[]> = this.sourceLiveList.live.map(list => list.map((n) => this.mapFn(n)));
     private sourceList: S[];
     private sourceMap: {[key:string]: S} = {};
     private sourceDestMap: object = {}; // id to id
     private destSourceMap: object = {}; // id to id
 
     constructor(public sourceLiveList: LiveList<S>, public mapFn: (obj: S) => LiveObject<T>) {
-        super({observable: () => this.liveObjects.switchMap(list => Observable.combineLatest(list.map(o => o.live)))
+        super({observable: () => Observable.from(this.liveObjects).switchMap(list => Observable.combineLatest(list.map(o => o.live)))
             // return this.sourceLiveList.subscribe((srcList) => {
             //     this.sourceList = srcList;
             //     let observable = Observable.combineLatest(srcList.map((n) => this.mapFn(n)));

@@ -21,7 +21,7 @@ export interface ILiveObservable<T> extends Observable<T> {
 
 export interface LiveList<T> extends LiveModel<T[]> {
 
-    liveObjects: Observable<LiveObject<T>[]>
+    liveObjects: Subscribable<LiveObject<T>[]>
 
     // Operations
     add(obj: T, extra?: any, options?: any): Promise<any>
