@@ -56,47 +56,14 @@ export class WrapLiveObject<T> extends WrapLiveModel<T, T, LiveObject<T>> implem
         });
     }
 
-    createIfNone: (create: () => Promise<T>) => LiveObject<T> = createIfNone;
-    
-    // createIfNone(create: () => Promise<T>): LiveObject<T> {
-    //     var createPromise: Promise<T>;
-    //     return new WrapLiveObject<T>((setObj, subscriber) => {
-    //         return this.live.first().subscribe((n) => {
-    //             if (!n) {
-    //                 if (!createPromise) {
-    //                     createPromise = create();
-    //                 }
-    //                 createPromise.then((obj) => {
-    //                     this.data = obj;
-    //                     setObj(this);
-    //                 }, (e) => {subscriber.error(e)});
-    //             } else {
-    //                 subscriber.next(n);
-    //                 setObj(this);
-    //             }
-    //         }, (e) => {subscriber.error(e)}); // No complete, because we are using the first() method
-    //     });
-    // }
-
-}
-
-export function createIfNone<T>(create: () => Promise<T>): LiveObject<T> {
-    var createPromise: Promise<T>;
-    return new WrapLiveObject<T>((setObj, subscriber) => {
-        return this.live.first().subscribe((n) => {
-            if (!n) {
-                if (!createPromise) {
-                    createPromise = create();
+    createIfNone(create: () => Promise<T>): LiveObject<T> {
+        return new WrapLiveObject<T>((setChild, subscriber) => {
+            return this.childObservable.subscribe(() => {
+                if (this.child) {
+                    setChild(this.child.createIfNone(create));
                 }
-                createPromise.then((obj) => {
-                    this.data = obj;
-                    setObj(this)
-                }, (e) => {subscriber.error(e)});
-            } else {
-                subscriber.next(n);
-                setObj(this);
-            }
-        }, (e) => {subscriber.error(e)});
-    });
-}
+            }, (e) => {subscriber.error(e)}, () => {subscriber.complete()});
+        });
+    }
 
+}

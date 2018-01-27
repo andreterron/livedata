@@ -6,7 +6,7 @@ import { LiveDataObservable } from './live-data-observable';
 import { WrapLiveList } from './wrap-live-list';
 import { Subscribable } from 'rxjs/Observable';
 import { Observable } from 'rxjs/Rx';
-import { WrapLiveObject, createIfNone } from './wrap-live-object';
+import { WrapLiveObject } from './wrap-live-object';
 import { RefreshMethods } from '../interfaces/refresh-methods.interface';
 
 export class BaseLiveObject<T> extends LiveModel<T> implements LiveObject<T> {
@@ -20,7 +20,25 @@ export class BaseLiveObject<T> extends LiveModel<T> implements LiveObject<T> {
         super(methods);
     }
     
-    createIfNone: (create: () => Promise<T>) => LiveObject<T> = createIfNone;
+    createIfNone(create: () => Promise<T>): LiveObject<T> {
+        var createPromise: Promise<T>;
+        return new WrapLiveObject<T>((setObj, subscriber) => {
+            return this.live.first().subscribe((n) => {
+                if (!n) {
+                    if (!createPromise) {
+                        createPromise = create();
+                    }
+                    createPromise.then((obj) => {
+                        this.data = obj;
+                        setObj(this)
+                    }, (e) => {subscriber.error(e)});
+                } else {
+                    subscriber.next(n);
+                    setObj(this);
+                }
+            }, (e) => {subscriber.error(e)});
+        });
+    }
     
     thenRefresh<R>(r: R): R {
         this.refresh();

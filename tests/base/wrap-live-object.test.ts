@@ -91,54 +91,27 @@ describe('Wrap Live Object', () => {
 
 
     describe('createIfNone', () => {
-        it('should behave as a normal object', () => {
-            // let obj = new WrapLiveObject((setLiveObject, subscriber) => {
-            //     setLiveObject(childObj);
-            // });
-            let dm = sinon.createStubInstance(BaseDataManager);
-            let create = sinon.stub().resolves(mockObj);
-            let refresh = sinon.stub();
-            refresh.onCall(0).resolves(null);
-            refresh.resolves(mockObj);
-            // let empty = sinon.createStubInstance(BaseLiveObject);
-            // empty.subscribe.callsArgWith(0, null);
-            // let wrap = new WrapLiveObject((setChild, subscriber) => {
-            //     setChild(empty);
-            // })
+        it('should call child createIfNone', async () => {
+            // Setup
+            let create = sinon.stub();
             let empty = sinon.createStubInstance(BaseLiveObject);
-            empty.subscribe.onCall(0).callsArgWith(0, null);
             empty.subscribe.callsArgWith(0, mockObj);
+            empty.createIfNone.returns(empty);
             let wrap = new WrapLiveObject((setChild, subscriber) => {
                 setChild(empty);
             })
             let obj = wrap.createIfNone(create);
-            // let obj = empty.createIfNone(() => (mockObj));
+            let subResult = await new Promise((resolve, reject) => {
+                obj.subscribe(resolve, reject, complete)
+            });
 
-            obj.subscribe(next, err, complete);
-    
-            // expect(next, 'next 1').to.be.calledOnce.calledWith(mockObj);
-            // expect(err, 'err 1').to.not.be.called;
-            // expect(complete, 'complete 1').to.not.be.called;
-            // expect(refresh, 'refresh 1').to.be.called;
-            // expect(create, 'create 1').to.be.calledOnce;
+            // Validation
+            expect(subResult, 'result').to.be.equal(mockObj)
+            expect(empty.createIfNone, 'child createIfNone').to.be.calledOnce.calledWith(create);
+            expect(complete, 'complete').to.not.be.called;
 
-            // next.reset();
-            // refresh.reset();
-            // create.reset();
-
-            return obj.refresh()
-                .then(() => {
-                    // expect(next).to.be.calledOnce;
-                    expect(next, 'next 2').to.be.calledWith(mockObj); // TODO: called once maybe?
-                    expect(err, 'err 2').to.not.be.called;
-                    expect(complete, 'complete 2').to.not.be.called;
-                    expect(empty.subscribe, 'subscribe 2').to.be.called;
-                    expect(create, 'create 2').to.be.calledOnce;
-                    // Teardown
-                    resetMain();
-                });
-            // expect().to.be.called;
-    
+            // Teardown
+            resetMain();
         });
     });
 
