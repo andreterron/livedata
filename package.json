@@ -1,6 +1,6 @@
 {
   "name": "live-model",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Live Model",
   "main": "index.js",
   "types": "dist/index.d.ts",
