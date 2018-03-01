@@ -1,11 +1,19 @@
+
 import { Observable, ObservableInput } from "rxjs/Observable";
 import { Subscription, TeardownLogic, AnonymousSubscription } from 'rxjs/Subscription';
 import { PartialObserver } from "rxjs/Observer";
 import { Subscribable } from "rxjs/Observable";
 import { LiveModel } from "./live-model";
-export { LiveModel };
+import { RelationInput } from './relations.interface';
 
-export { RelationsDefinition, RelationSide } from './relations.interface';
+export { RelationSide, RelationPartial, RelationsDefinition, RelationDefinition, RelationInputObject } from './relations.interface';
+export { LiveModel, RelationInput };
+
+import 'rxjs/add/observable/of';
+import 'rxjs/add/observable/combineLatest';
+import 'rxjs/add/operator/first';
+import 'rxjs/add/operator/switchMap';
+
 
 export interface ILiveObservable<T> extends Observable<T> {
     
@@ -19,7 +27,15 @@ export interface ILiveObservable<T> extends Observable<T> {
 
 }
 
-export interface LiveList<T> extends LiveModel<T[]> {
+export interface ILiveModel<T> extends Subscribable<T> {
+    live: Subscribable<T>
+    data: T
+    loading: boolean
+    once(): Promise<T>
+    refresh(): Promise<T>
+}
+
+export interface LiveList<T> extends ILiveModel<T[]> {
 
     liveObjects: Subscribable<LiveObject<T>[]>
 
@@ -37,15 +53,15 @@ export interface LiveList<T> extends LiveModel<T[]> {
 
 }
 
-export interface LiveObject<T> extends LiveModel<T> {
+export interface LiveObject<T> extends ILiveModel<T> {
 
     // Operations
     save(obj?: T, options?: any): Promise<any>
     delete(options?: any): Promise<any>
 
     // Relationships
-    toMany<R>(relationName: string, options?: any): LiveList<R>
-    toOne<R>(relationName: string, options?: any): LiveObject<R>
+    toMany<R>(relation: RelationInput, options?: any): LiveList<R>
+    toOne<R>(relation: RelationInput, options?: any): LiveObject<R>
 
     // Mutators
     createIfNone(create: () => Promise<T>): LiveObject<T>

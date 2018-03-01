@@ -2,7 +2,7 @@
   "name": "live-model",
   "version": "0.0.5",
   "description": "Live Model",
-  "main": "index.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "test-w": "mocha --reporter spec --require ts-node/register 'tests/**/*.test.{ts,js}' -w --watch-extensions js,ts",

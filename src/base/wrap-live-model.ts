@@ -5,6 +5,8 @@ import { Subscriber } from "rxjs/Subscriber";
 import { Observable } from "rxjs/Observable";
 import { Promise } from 'bluebird';
 
+import 'rxjs/add/observable/from';
+
 export abstract class WrapLiveModel<T, S, L extends LiveList<S> | LiveObject<S>> extends LiveModel<T> {
     childReceivedSubscription: AnonymousSubscription;
     public child: L = null;

@@ -69,7 +69,7 @@ export class FirestoreQueryLiveList<T> extends BaseLiveList<T> {
                         });
                     } else {
                         let value = relation ? this.rootRef.collection(relation.type).doc(this.query.where[w]) : this.query.where[w];
-                        console.log('HERE BE WHERE', key, value);
+                        // console.log('HERE BE WHERE', key, value);
                         q = q.where(key, '==', value);
                     }
                 });

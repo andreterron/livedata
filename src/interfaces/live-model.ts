@@ -2,11 +2,15 @@ import { LiveDataObservable } from './../base/live-data-observable';
 import { RefreshMethods } from './refresh-methods.interface';
 import { Subscribable } from "rxjs/Observable";
 import { Observable } from "rxjs/Observable";
-import { AnonymousSubscription, TeardownLogic } from "rxjs/Subscription";
+import { AnonymousSubscription, TeardownLogic, Subscription } from "rxjs/Subscription";
 import { Subscriber } from 'rxjs/Subscriber';
 import { PartialObserver } from 'rxjs/Observer';
 
-export class LiveModel<T> implements Subscribable<T> {
+export class LiveModel<T> extends Observable<T> implements Subscribable<T> {
+
+    public static logErrors: boolean = true;
+    public static defaultErrorHandler: (e) => void = (e) => console.error(e);
+
     // Should cache and subscribers control be implemented here?
     public live: Observable<T> // const
     public data: T = null;
@@ -20,6 +24,14 @@ export class LiveModel<T> implements Subscribable<T> {
     // private lmo: LiveDataObservable<T>;
 
     constructor(private methods: RefreshMethods<T> = {}) { //, subscribe?: (subscriber: Subscriber<T>) => TeardownLogic) {
+        super((subscriber) => {
+            console.log('SUBSCRIBED! WTF???')
+            // if (this.live) {
+            //     return this.live.subscribe(n => subscriber.next(n), e => subscriber.error(e), () => subscriber.complete());
+            // }
+            // console.error('SUBSCRIBING BEFORE CONSTRUCTOR - WAAAAT?');
+            // subscriber.error(new Error("Subscribing before constructor is finished"));
+        });
         this.live = new Observable((subscriber: Subscriber<T>): TeardownLogic => {
             var needsSubscribeOnce = (this.subscribers.length === 0);
 
@@ -85,6 +97,10 @@ export class LiveModel<T> implements Subscribable<T> {
         this.subscribers.forEach((sub) => {
             sub.error(err);
         });
+    }
+
+    protected alertErrorAndThrow(err) {
+        this.alertError(err);
         throw err;
     }
     
@@ -107,7 +123,7 @@ export class LiveModel<T> implements Subscribable<T> {
             if (!promise) {
                 this.loading = true;
                 promise = this.methods.refresh()
-                    .then(n => this.alert(n), e => this.alertError(e));
+                    .then(n => this.alert(n), e => this.alertErrorAndThrow(e));
                 this.refreshPromise = promise;
                 promise.then(() => {
                     this.refreshPromise = null;
@@ -115,13 +131,44 @@ export class LiveModel<T> implements Subscribable<T> {
             }
             return promise;
         }
+        this.live.subscribe()
         return Promise.resolve(this.data);
         // return this.lmo.refresh();
     }
-    subscribe(observerOrNext?: PartialObserver<T> | ((value: T) => void), error?: (error: any) => void, complete?: () => void): AnonymousSubscription {
-        if (typeof observerOrNext === 'function') {
-            return this.live.subscribe(observerOrNext, error, complete);
+    subscribe(observerOrNext?: PartialObserver<T> | ((value: T) => void), error?: (error: any) => void, complete?: () => void): Subscription {
+        if (typeof observerOrNext === 'function' || error || complete) {
+            if (LiveModel.logErrors) {
+                if (!error) {
+                    error = LiveModel.defaultErrorHandler;
+                } else {
+                    let handler = error
+                    error = (e) => {
+                        try {
+                            handler(e);
+                        } catch (err) {
+                            LiveModel.defaultErrorHandler(err);
+                        }
+                    }
+                }
+            }
+            return this.live.subscribe(observerOrNext as ((value: T) => void), error, complete);
+        } else if (!observerOrNext) {
+            return this.live.subscribe();
         } else {
+            if (LiveModel.logErrors) {
+                if (!observerOrNext.error) {
+                    observerOrNext.error = (e) => console.error(e);
+                } else {
+                    let handler = observerOrNext.error;
+                    observerOrNext.error = (e) => {
+                        try {
+                            handler(e);
+                        } catch(err) {
+                            LiveModel.defaultErrorHandler(err);
+                        }
+                    }
+                }
+            }
             return this.live.subscribe(observerOrNext);
         }
     }

@@ -1,12 +1,10 @@
 import { Subscription, TeardownLogic } from 'rxjs/Subscription';
-import { LiveObject, LiveList, LiveModel } from './../interfaces';
+import { LiveObject, LiveList, LiveModel, RelationInput } from './../interfaces';
 import { Subscriber } from 'rxjs/Subscriber';
 import { BaseDataManager } from "./base-data-manager";
 import { LiveDataObservable } from './live-data-observable';
-import { WrapLiveList } from './wrap-live-list';
-import { Subscribable } from 'rxjs/Observable';
-import { Observable } from 'rxjs/Rx';
-import { WrapLiveObject } from './wrap-live-object';
+import { Observable, Subscribable } from 'rxjs/Observable';
+import { WrapLiveObject, WrapLiveList } from './wrap-live-object';
 import { RefreshMethods } from '../interfaces/refresh-methods.interface';
 
 export class BaseLiveObject<T> extends LiveModel<T> implements LiveObject<T> {
@@ -61,16 +59,16 @@ export class BaseLiveObject<T> extends LiveModel<T> implements LiveObject<T> {
         return Promise.reject(new Error('Deleting object that doesn\'t have an ID)'));
     }
 
-    toMany<R>(relationName: string, options?: any): LiveList<R> {
-        return this.dataManager.objToMany(this.type, this, relationName, options);
+    toMany<R>(relation: RelationInput, options?: any): LiveList<R> {
+        return this.dataManager.objToMany(this.type, this, relation, options);
         // return new WrapLiveList<R>((setList, subscriber): TeardownLogic => {
         //     return this.subscribe((next: T) => {
         //         return setList(next ? this.dataManager.toMany<R>(this.type, next, relationName, options) : null);
         //     }, (e) => {subscriber.error(e)}, () => {subscriber.complete()});
         // });
     }
-    toOne<R>(relationName: string, options?: any): LiveObject<R> {
-        return this.dataManager.objToOne(this.type, this, relationName, options);
+    toOne<R>(relation: RelationInput, options?: any): LiveObject<R> {
+        return this.dataManager.objToOne(this.type, this, relation, options);
         // return new WrapLiveObject<R>((setObj, subscriber): TeardownLogic => {
         //     return this.subscribe((next: T) => {
         //         setObj(next ? this.dataManager.toOne<R>(this.type, next, relationName, options) : null);

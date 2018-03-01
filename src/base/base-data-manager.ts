@@ -1,6 +1,5 @@
-import { RelationsDefinition, RelationSide, LiveList, LiveObject } from './../interfaces/';
-import { WrapLiveObject } from './wrap-live-object';
-import { WrapLiveList } from './wrap-live-list';
+import { RelationDefinition, RelationInput, RelationPartial, RelationInputObject, RelationsDefinition, RelationSide, LiveList, LiveObject } from './../interfaces/';
+import { WrapLiveObject, WrapLiveList } from './wrap-live-object';
 import { TeardownLogic } from 'rxjs/Subscription';
 
 
@@ -174,28 +173,114 @@ export abstract class BaseDataManager {
     constructor(relations: RelationsDefinition, public options?: any) {
         this.relations = normalizeRelations(relations, options);
     }
+    format(name: string): string {
+        let replace = (str: string, char?: string) => {
+            return str.replace(/([a-z])[-_ ]?([A-Z])/g, (_, $1, $2): string => {
+                if (char) {
+                    return `${$1}${char}${$2.toLowerCase()}`;
+                } else {
+                    return `${$1}${$2.toUpperCase()}`;
+                }
+            });
+        }
+        switch (this.options && this.options.namingConvention || undefined) {
+            case 'underline':
+                return replace(name, '_');
+            case 'dash':
+                return replace(name, '-');
+            case 'space':
+                return replace(name, ' ');
+            case 'camelCase':
+                return replace(name);
+            default:
+                return name;
+        }
+    }
 
-    objToOne<T>(type: string, obj: LiveObject<any>, relationName: string, options?: any): LiveObject<T> {
+    fieldKey(name: string): string {
+        return this.format(`${name}_${this.options && this.options.keySuffix || 'id'}`)
+    }
+
+    fillRelation(relation: RelationPartial): RelationDefinition {
+        return Object.assign(
+            {
+                localKey: this.fieldKey(relation.name),
+                localField: this.format(relation.name),
+            },
+            relation,
+            {
+                edge: relation.edge ? (typeof relation.edge === 'string' ? {
+                    name: relation.edge,
+                    localKey: this.fieldKey(relation.name),
+                    localField: this.format(relation.name),
+                } : Object.assign({
+                    name: relation.edge.name,
+                    localKey: this.fieldKey(relation.name),
+                    localField: this.format(relation.name),
+                }, relation.edge)) : undefined
+            }
+        );
+    }
+
+    parseRelation(type: string, input: RelationInput, extra: RelationInputObject): RelationDefinition {
+        if (typeof input === 'string') {
+            if (this.relations[input]) {
+                return this.fillRelation(Object.assign({
+                    name: this.relations[type][input].name || input,
+                    to: this.relations[type][input].to,
+                    toType: this.relations[type][input].type
+                }, this.relations[type][input]));
+            } else if (extra.to) {
+                return this.fillRelation({
+                    name: input,
+                    to: extra.to,
+                    toType: input
+                })
+            } else {
+                throw new Error("Unable to determine size of relation (to many or to one)")
+            }
+        } else {
+            let rel = this.fillRelation(Object.assign({}, input, extra, {
+                name: input.name || extra.name || input.toType || extra.toType,
+                to: input.to || extra.to,
+                toType: input.toType || extra.toType || input.name || extra.name
+            }));
+            if (!rel.name || !rel.to || !rel.toType) {
+                throw new Error("Unable to parse relation" + JSON.stringify(input));
+            }
+            return rel;
+        }
+    }
+
+    objToOne<T>(type: string, obj: LiveObject<any>, relation: RelationInput, options?: any): LiveObject<T> {
         return new WrapLiveObject<T>((setChild, subscriber): TeardownLogic => {
             var lastObj: T;
             return obj.subscribe((next: T) => {
-                if (next && (!lastObj || next['id'] != lastObj['id'])) {
-                    return setChild(this.toOne<T>(type, next, relationName, options));
-                } else if (lastObj && !next) {
-                    return setChild(null); // TODO: review this call
+                try {
+                    if (next && (!lastObj || next['id'] != lastObj['id'])) {
+                        return setChild(this.toOne<T>(type, next, relation, options));
+                    } else if (lastObj && !next) {
+                        return setChild(null); // TODO: review this call
+                    }
+                } catch (e) {
+                    subscriber.error(e)
                 }
             }, (e) => {subscriber.error(e)}, () => {subscriber.complete()});
         });
     }
 
-    objToMany<T>(type: string, obj: LiveObject<any>, relationName: string, options?: any): LiveList<T> {
+    objToMany<T>(type: string, obj: LiveObject<any>, relation: RelationInput, options?: any): LiveList<T> {
         return new WrapLiveList<T>((setChild, subscriber): TeardownLogic => {
             var lastObj: T;
             return obj.subscribe((next: T) => {
-                if (next && (!lastObj || next['id'] != lastObj['id'])) {
-                    return setChild(this.toMany<T>(type, next, relationName, options));
-                } else if (lastObj && !next) {
-                    return setChild(null); // TODO: review this call
+                try {
+                    if (next && (!lastObj || next['id'] != lastObj['id'])) {
+                        return setChild(this.toMany<T>(type, next, relation, options));
+                    } else if (lastObj && !next) {
+                        return setChild(null); // TODO: review this call
+                    }
+                } catch (e) {
+                    subscriber.error(e)
                 }
             }, (e) => {subscriber.error(e)}, () => {subscriber.complete()});
         });
@@ -207,8 +292,8 @@ export abstract class BaseDataManager {
     
     abstract liveObject<T>(type: string, id: string, options?: any): LiveObject<T>
     abstract liveQuery<T>(type: string, query?: any, options?: any): LiveList<T>
-    abstract toMany<T>(type: string, obj: any, relationName: string, options?: any): LiveList<T>
-    abstract toOne<T>(type: string, obj: any, relationName: string, options?: any): LiveObject<T>
+    abstract toMany<T>(type: string, obj: any, relation: RelationInput, options?: any): LiveList<T>
+    abstract toOne<T>(type: string, obj: any, relation: RelationInput, options?: any): LiveObject<T>
 
     abstract save(type: string, obj: any, options?: any): Promise<any>
     abstract create(type: string, obj: any, options?: any): Promise<any>

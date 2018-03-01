@@ -1,8 +1,7 @@
 import { Subscription, TeardownLogic, AnonymousSubscription } from 'rxjs/Subscription';
 import { Subscriber } from 'rxjs/Subscriber';
 import { Subscribable } from "rxjs/Observable";
-import { ObservableInput } from 'rxjs/Observable';
-import { Observable } from 'rxjs/Rx';
+import { Observable, ObservableInput } from 'rxjs/Observable';
 import { RefreshMethods } from '../interfaces/refresh-methods.interface';
 
 export class LiveDataObservable<T> extends Observable<T> {

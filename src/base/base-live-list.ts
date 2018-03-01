@@ -1,4 +1,3 @@
-import { } from 'rxjs/Rx';
 import { LiveList, LiveObject, LiveModel } from "../interfaces";
 import { Observable, Subscribable } from "rxjs/Observable";
 import { Subscriber } from "rxjs/Subscriber";
@@ -6,11 +5,8 @@ import { TeardownLogic, Subscription } from "rxjs/Subscription";
 import { LiveDataObservable } from "./live-data-observable";
 import { BaseDataManager } from "./base-data-manager";
 import { BaseLiveObject } from './base-live-object';
-import { WrapLiveObject } from './wrap-live-object';
-import { CombinedLiveList } from './combined-live-list';
+import { WrapLiveObject, WrapLiveList } from './wrap-live-object';
 import { RefreshMethods } from '../interfaces/refresh-methods.interface';
-
-
 
 export abstract class BaseLiveList<T> extends LiveModel<T[]> implements LiveList<T> {
 
@@ -56,4 +52,23 @@ export abstract class BaseLiveList<T> extends LiveModel<T[]> implements LiveList
     abstract reorder(list: T[], options?: any): Promise<any>
     abstract remove(obj: T, options?: any): Promise<any>
     abstract delete(obj: T, options?: any): Promise<any>
+
+    public static fromObservable<I, R>(observable: Subscribable<I>, map: (v: I) => LiveList<R>) {
+        return new WrapLiveList<R>((setChild, subscriber) => {
+            return observable.subscribe((value) => {
+                try {
+                    let list = map(value);
+                    if (list) {
+                        setChild(list);
+                    }
+                } catch (e) {
+                    subscriber.error(e);
+                }
+            }, (err) => {
+                subscriber.error(err);
+            }, () => {
+                subscriber.complete();
+            });
+        });
+    }
 }

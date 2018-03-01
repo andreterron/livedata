@@ -46,6 +46,77 @@ export interface RelationsDefinition {
     }
 };
 
+export interface RelationDefinition {
+    name: string
+    reverseName?: string
+
+    to: 'one' | 'many' | 'ref'
+    from?: 'one' | 'many' | 'ref'
+
+    toType: string
+    fromType?: string
+
+    method?: string
+
+    edge?: {
+        name: string
+        localKey: string
+        localField: string
+    }
+
+    indexField?: string
+    
+    // Foreing Key
+    foreignKey?: string // Important
+    foreignField?: string
+    localKey: string
+    localField: string // Important
+
+    // index
+    // method extra
+}
+
+export interface RelationPartial extends RelationInputObject {
+    name: string
+    to: 'one' | 'many' | 'ref'
+    toType: string
+}
+
+export interface RelationInputObject {
+    name?: string
+    reverseName?: string
+
+    to?: 'one' | 'many' | 'ref'
+    from?: 'one' | 'many' | 'ref'
+
+    toType?: string
+    fromType?: string
+
+    method?: string
+
+    edge?: string | {
+        name: string
+        localKey?: string
+        localField?: string
+    }
+
+    // Index
+    isIndexed?: boolean,
+    indexField?: string,
+
+    // Foreing Key
+    foreignKey?: string, // Important
+    foreignField?: string,
+    localKey?: string,
+    localField?: string, // Important
+
+//     name?: string
+//     to?: 'one' | 'many' | 'ref'
+//     method?: string
+}
+
+export type RelationInput = string | RelationInputObject
+
 // export interface RelationsFullDefinition {
 //     [from: string]: {
 //         [field: string]: RelationSide
