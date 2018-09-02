@@ -1,7 +1,6 @@
 import { Subscriber } from 'rxjs/Subscriber';
 import { Observable } from "rxjs/Observable";
 import { TeardownLogic, Subscription } from 'rxjs/Subscription';
-import { LiveDataObservable } from '../base/live-data-observable';
 import { BaseLiveList } from '../base/base-live-list';
 import { BaseDataManager } from '../base/base-data-manager';
 import { firestore } from 'firebase';

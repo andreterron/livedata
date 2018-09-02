@@ -8,6 +8,8 @@
         "types" : [ "node", "jasmine", "core-js" ]
     },
     "include": [
-        "src/**/*"
+        "src/index.ts",
+        "src/v2/**/*",
+        // "src/base/**/*"
     ]
 }

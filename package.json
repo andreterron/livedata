@@ -2,11 +2,11 @@
   "name": "live-model",
   "version": "0.0.4",
   "description": "Live Model",
-  "main": "index.js",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "test-w": "mocha --reporter spec --require ts-node/register 'tests/**/*.test.{ts,js}' -w --watch-extensions js,ts",
-    "test": "mocha --reporter spec --require ts-node/register 'tests/**/*.test.{ts,js}'"
+    "test-w": "mocha --reporter spec --require ts-node/register 'tests/v2/**/*.test.{ts,js}' -w --watch-extensions js,ts",
+    "test": "mocha --reporter spec --require ts-node/register 'tests/v2/**/*.test.{ts,js}'"
   },
   "keywords": [
     "live",
@@ -35,12 +35,12 @@
     "sinon": "4.1.2",
     "sinon-chai": "^2.14.0",
     "ts-node": "^3.3.0",
-    "typescript": "^2.6.2"
+    "typescript": "^3.0.1"
   },
   "dependencies": {
     "bluebird": "^3.5.1",
     "firebase": "^4.8.2",
     "js-data": "^3.0.1",
-    "rxjs": "^5.5.6"
+    "rxjs": "^6.2.2"
   }
 }

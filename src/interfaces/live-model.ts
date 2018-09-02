@@ -1,4 +1,3 @@
-import { LiveDataObservable } from './../base/live-data-observable';
 import { RefreshMethods } from './refresh-methods.interface';
 import { Subscribable } from "rxjs/Observable";
 import { Observable } from "rxjs/Observable";
@@ -17,7 +16,6 @@ export class LiveModel<T> implements Subscribable<T> {
     private isCached: boolean = false;
     private teardownOnce: TeardownLogic = null;
     private refreshPromise: Promise<any> = null;
-    // private lmo: LiveDataObservable<T>;
 
     constructor(private methods: RefreshMethods<T> = {}) { //, subscribe?: (subscriber: Subscriber<T>) => TeardownLogic) {
         this.live = new Observable((subscriber: Subscriber<T>): TeardownLogic => {
@@ -94,10 +92,6 @@ export class LiveModel<T> implements Subscribable<T> {
         });
     }
 
-    // constructor(private methods: RefreshMethods<T> = {}) {
-    //     this.lmo = new LiveDataObservable(methods);
-    //     this.live = Observable.from(this.lmo);
-    // }
     once(): Promise<T> {
         return this.live.first().toPromise();
     }

@@ -2,7 +2,6 @@ import { Subscriber } from 'rxjs/Subscriber';
 import { Observable } from "rxjs/Observable";
 import { TeardownLogic, Subscription } from 'rxjs/Subscription';
 import { DataStore, SimpleStore, Mapper } from 'js-data';
-import { LiveDataObservable } from '../base/live-data-observable';
 import { BaseLiveList } from '../base/base-live-list';
 import { BaseDataManager } from '../base/base-data-manager';
 

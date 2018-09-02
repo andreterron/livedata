@@ -2,7 +2,7 @@ import { Observable, ObservableInput } from "rxjs/Observable";
 import { Subscription, TeardownLogic, AnonymousSubscription } from 'rxjs/Subscription';
 import { PartialObserver } from "rxjs/Observer";
 import { Subscribable } from "rxjs/Observable";
-import { LiveModel } from "./live-model";
+import { LiveModel } from "../v2/live-model";
 export { LiveModel };
 
 export { RelationsDefinition, RelationSide } from './relations.interface';
