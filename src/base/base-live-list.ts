@@ -18,7 +18,7 @@ export abstract class BaseLiveList<T> extends LiveModel<T[]> implements LiveList
 
     index(index: number): LiveObject<T> {
         let obj = new BaseLiveObject<T>(this.dataManager, this.type, {subscribeOnce: (subscriber) => {
-            let teardown = this.subscribe(n => {
+            return this.subscribe(n => {
                 if (n[index]) {
                     obj.id = n[index]['id'];
                     subscriber.next(n[index]);
@@ -26,8 +26,7 @@ export abstract class BaseLiveList<T> extends LiveModel<T[]> implements LiveList
                     subscriber.next(null);
                 }
             }, (e) => {subscriber.error(e)}, () => {subscriber.complete()});
-            this.refresh();
-            return teardown;
+            // this.refresh();
         }});
         return obj;
     }
@@ -54,17 +53,21 @@ export abstract class BaseLiveList<T> extends LiveModel<T[]> implements LiveList
     abstract delete(obj: T, options?: any): Promise<any>
 
     public static fromObservable<I, R>(observable: Subscribable<I>, map: (v: I) => LiveList<R>) {
+        console.log('FROM OBSERVABLE');
         return new WrapLiveList<R>((setChild, subscriber) => {
             return observable.subscribe((value) => {
                 try {
                     let list = map(value);
                     if (list) {
                         setChild(list);
+                    } else {
+                        console.error("FROM OBSERVABLE - NO LIST");
                     }
                 } catch (e) {
                     subscriber.error(e);
                 }
             }, (err) => {
+                console.error("FROM OBSERVABLE", err);
                 subscriber.error(err);
             }, () => {
                 subscriber.complete();

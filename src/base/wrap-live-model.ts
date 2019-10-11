@@ -5,7 +5,7 @@ import { Subscriber } from "rxjs/Subscriber";
 import { Observable } from "rxjs/Observable";
 import { Promise } from 'bluebird';
 
-import 'rxjs/add/observable/from';
+// import 'rxjs/add/observable/from';
 
 export abstract class WrapLiveModel<T, S, L extends LiveList<S> | LiveObject<S>> extends LiveModel<T> {
     childReceivedSubscription: AnonymousSubscription;
@@ -18,7 +18,7 @@ export abstract class WrapLiveModel<T, S, L extends LiveList<S> | LiveObject<S>>
     public childSubscribers: Subscriber<L>[] = [];
     private resolveChildPromise: (value?: void | PromiseLike<void>) => void;
 
-    constructor(subscribe: (setChild: (list: L, subscribe?: (wrap: WrapLiveModel<T, S, L>, subscriber: Subscriber<T>) => TeardownLogic) => L, subscriber: Subscriber<T>) => TeardownLogic) {
+    constructor(subscribe: (setChild: (list: L, subscribe?: (wrap: WrapLiveModel<T, S, L>, subscriber: Subscriber<T>) => TeardownLogic) => L, subscriber: Subscriber<T>) => TeardownLogic, public depth: number = 0) {
         super({subscribeOnce: (subscriber) => {
             return subscribe(this.setChild.bind(this), subscriber);
         }});
@@ -46,6 +46,16 @@ export abstract class WrapLiveModel<T, S, L extends LiveList<S> | LiveObject<S>>
     });
 
     private setChild(child: L, subscribe?: (wrap: WrapLiveModel<T, S, L>, subscriber: Subscriber<T>) => TeardownLogic) {
+        if (child instanceof WrapLiveModel) {
+            var d = this.depth + 1
+            var c = child
+            while (c) {
+                c.depth = d
+                c = c.child
+                d += 1
+            }
+        }
+        // console.log('WRAP SET CHILD', this.depth);
         this.resetCache();
         this.childSubscriptions.forEach(s => {
             if (s) {
@@ -74,6 +84,10 @@ export abstract class WrapLiveModel<T, S, L extends LiveList<S> | LiveObject<S>>
     }
 
     waitForChild(): Promise<any> {
+        // if (this.childPromise) {
+        //     return this.childPromise
+        // }
+        // return this.refresh();
         if (!this.subscribers.length && !this.childReceivedSubscription) {
             this.childReceivedSubscription = this.live.first().subscribe();
         }

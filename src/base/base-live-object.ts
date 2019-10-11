@@ -53,7 +53,7 @@ export class BaseLiveObject<T> extends LiveModel<T> implements LiveObject<T> {
     }
 
     delete(options?: any): Promise<any> {
-        if (this.id === undefined || this.id === null) {
+        if (this.id !== undefined && this.id !== null) {
             return this.dataManager.delete(this.type, {id: this.id}, options);
         }
         return Promise.reject(new Error('Deleting object that doesn\'t have an ID)'));

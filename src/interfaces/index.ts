@@ -9,23 +9,23 @@ import { RelationInput } from './relations.interface';
 export { RelationSide, RelationPartial, RelationsDefinition, RelationDefinition, RelationInputObject } from './relations.interface';
 export { LiveModel, RelationInput };
 
-import 'rxjs/add/observable/of';
-import 'rxjs/add/observable/combineLatest';
+// import 'rxjs/add/observable/of';
+// import 'rxjs/add/observable/combineLatest';
 import 'rxjs/add/operator/first';
 import 'rxjs/add/operator/switchMap';
 
 
-export interface ILiveObservable<T> extends Observable<T> {
+// export interface ILiveObservable<T> extends Observable<T> {
     
-    alert(next: T): T
+//     alert(next: T): T
 
-    alertError(err)
+//     alertError(err)
 
-    // liveSwitchMap<I>(project: (value: T, index: number) => ObservableInput<I>): ILiveObservable<I>
-    // switchLiveList<I>(project: (value: T, index: number) => ILiveList<I>): ILiveList<I>
-    // switchLiveObject<I>(project: (value: T, index: number) => ILiveObject<I>): ILiveObject<I>
+//     // liveSwitchMap<I>(project: (value: T, index: number) => ObservableInput<I>): ILiveObservable<I>
+//     // switchLiveList<I>(project: (value: T, index: number) => ILiveList<I>): ILiveList<I>
+//     // switchLiveObject<I>(project: (value: T, index: number) => ILiveObject<I>): ILiveObject<I>
 
-}
+// }
 
 export interface ILiveModel<T> extends Subscribable<T> {
     live: Subscribable<T>

@@ -6,7 +6,7 @@ import { AnonymousSubscription, TeardownLogic, Subscription } from "rxjs/Subscri
 import { Subscriber } from 'rxjs/Subscriber';
 import { PartialObserver } from 'rxjs/Observer';
 
-export class LiveModel<T> extends Observable<T> implements Subscribable<T> {
+export class LiveModel<T> implements Subscribable<T> {
 
     public static logErrors: boolean = true;
     public static defaultErrorHandler: (e) => void = (e) => console.error(e);
@@ -17,21 +17,21 @@ export class LiveModel<T> extends Observable<T> implements Subscribable<T> {
     public loading: boolean = false;
 
     protected subscribers: Subscriber<T>[] = [];
+    protected isCached: boolean = false;
 
-    private isCached: boolean = false;
     private teardownOnce: TeardownLogic = null;
     private refreshPromise: Promise<any> = null;
     // private lmo: LiveDataObservable<T>;
 
     constructor(private methods: RefreshMethods<T> = {}) { //, subscribe?: (subscriber: Subscriber<T>) => TeardownLogic) {
-        super((subscriber) => {
-            console.log('SUBSCRIBED! WTF???')
-            // if (this.live) {
-            //     return this.live.subscribe(n => subscriber.next(n), e => subscriber.error(e), () => subscriber.complete());
-            // }
-            // console.error('SUBSCRIBING BEFORE CONSTRUCTOR - WAAAAT?');
-            // subscriber.error(new Error("Subscribing before constructor is finished"));
-        });
+        // super((subscriber) => {
+        //     console.log('SUBSCRIBED! WTF???')
+        //     // if (this.live) {
+        //     //     return this.live.subscribe(n => subscriber.next(n), e => subscriber.error(e), () => subscriber.complete());
+        //     // }
+        //     // console.error('SUBSCRIBING BEFORE CONSTRUCTOR - WAAAAT?');
+        //     // subscriber.error(new Error("Subscribing before constructor is finished"));
+        // });
         this.live = new Observable((subscriber: Subscriber<T>): TeardownLogic => {
             var needsSubscribeOnce = (this.subscribers.length === 0);
 
@@ -72,7 +72,7 @@ export class LiveModel<T> extends Observable<T> implements Subscribable<T> {
                     this.isCached = true;
                     subscriber.next(next);
                 }, (err) => subscriber.error(err), () => subscriber.complete()));
-            } else {
+            } else if (methods.refresh) {
                 this.refresh();
             }
         });
@@ -131,9 +131,10 @@ export class LiveModel<T> extends Observable<T> implements Subscribable<T> {
             }
             return promise;
         }
-        this.live.subscribe()
-        return Promise.resolve(this.data);
-        // return this.lmo.refresh();
+        if (this.isCached) {
+            return Promise.resolve(this.data);
+        }
+        return this.once();
     }
     subscribe(observerOrNext?: PartialObserver<T> | ((value: T) => void), error?: (error: any) => void, complete?: () => void): Subscription {
         if (typeof observerOrNext === 'function' || error || complete) {
@@ -147,6 +148,25 @@ export class LiveModel<T> extends Observable<T> implements Subscribable<T> {
                             handler(e);
                         } catch (err) {
                             LiveModel.defaultErrorHandler(err);
+                        }
+                    }
+                }
+                if (typeof observerOrNext === 'function') {
+                    let unhandled = observerOrNext
+                    observerOrNext = (n) => {
+                        try {
+                            unhandled(n)
+                        } catch(e) {
+                            LiveModel.defaultErrorHandler(e);
+                        }
+                    }
+                } else {
+                    let unhandled = observerOrNext.next
+                    observerOrNext.next = (n) => {
+                        try {
+                            unhandled(n)
+                        } catch(e) {
+                            LiveModel.defaultErrorHandler(e);
                         }
                     }
                 }
@@ -166,6 +186,14 @@ export class LiveModel<T> extends Observable<T> implements Subscribable<T> {
                         } catch(err) {
                             LiveModel.defaultErrorHandler(err);
                         }
+                    }
+                }
+                let unhandled = observerOrNext.next
+                observerOrNext.next = (n) => {
+                    try {
+                        unhandled(n)
+                    } catch(e) {
+                        LiveModel.defaultErrorHandler(e);
                     }
                 }
             }

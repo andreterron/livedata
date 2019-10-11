@@ -56,7 +56,7 @@ export function normalizeRelations(relations: RelationsDefinition, options?: any
 
     function ensureFromFields(rel: RelationSide, rev: RelationSide, from: string) {
         rel.foreignKey = rel.foreignKey || rev.localKey || format(`${rev.name}_id`);
-        rel.localField = rel.localField || rev.foreignField || format(plural(rel.name));
+        rel.localField = rel.localField || rev.foreignField || format(rel.plural || plural(rel.name));
         if (rel.isIndexed && (rel.to === 'many' || rev.to === 'many')) {
             rel.indexField = rel.indexField || rev.indexField || format(`${from}_${rel.name}_index`);
         }
@@ -198,14 +198,22 @@ export abstract class BaseDataManager {
     }
 
     fieldKey(name: string): string {
+        if (this.options && (this.options.keySuffix === null || (typeof this.options.keySuffix === 'string' && this.options.keySuffix.length === 0))) {
+            return this.format(name);
+        }
         return this.format(`${name}_${this.options && this.options.keySuffix || 'id'}`)
     }
 
     fillRelation(relation: RelationPartial): RelationDefinition {
+        let reverseName = relation.reverseName || relation.fromType
         return Object.assign(
             {
                 localKey: this.fieldKey(relation.name),
                 localField: this.format(relation.name),
+                reverseName: reverseName,
+                indexField: relation.isIndexed ? 'index' : undefined,
+                foreignKey: this.fieldKey(reverseName),
+                foreignField: this.format(reverseName),
             },
             relation,
             {
@@ -213,10 +221,14 @@ export abstract class BaseDataManager {
                     name: relation.edge,
                     localKey: this.fieldKey(relation.name),
                     localField: this.format(relation.name),
+                    foreignKey: this.fieldKey(reverseName),
+                    foreignField: this.format(reverseName),
                 } : Object.assign({
                     name: relation.edge.name,
                     localKey: this.fieldKey(relation.name),
                     localField: this.format(relation.name),
+                    foreignKey: this.fieldKey(reverseName),
+                    foreignField: this.format(reverseName),
                 }, relation.edge)) : undefined
             }
         );
@@ -227,12 +239,14 @@ export abstract class BaseDataManager {
             if (this.relations[input]) {
                 return this.fillRelation(Object.assign({
                     name: this.relations[type][input].name || input,
+                    fromType: type,
                     to: this.relations[type][input].to,
                     toType: this.relations[type][input].type
                 }, this.relations[type][input]));
             } else if (extra.to) {
                 return this.fillRelation({
                     name: input,
+                    fromType: type,
                     to: extra.to,
                     toType: input
                 })
@@ -242,6 +256,7 @@ export abstract class BaseDataManager {
         } else {
             let rel = this.fillRelation(Object.assign({}, input, extra, {
                 name: input.name || extra.name || input.toType || extra.toType,
+                fromType: type,
                 to: input.to || extra.to,
                 toType: input.toType || extra.toType || input.name || extra.name
             }));
@@ -270,20 +285,34 @@ export abstract class BaseDataManager {
     }
 
     objToMany<T>(type: string, obj: LiveObject<any>, relation: RelationInput, options?: any): LiveList<T> {
-        return new WrapLiveList<T>((setChild, subscriber): TeardownLogic => {
+        // console.log('OBJ to MANY', type, relation);
+        let w = new WrapLiveList<T>((setChild, subscriber): TeardownLogic => {
             var lastObj: T;
+            // console.log('OBJ to MANY - lets subscribe', w.depth);
             return obj.subscribe((next: T) => {
+                // console.log('OBJ to MANY - got next', w.depth);
+                // console.log('Got source object on objToMany', type, relation);
                 try {
                     if (next && (!lastObj || next['id'] != lastObj['id'])) {
-                        return setChild(this.toMany<T>(type, next, relation, options));
+                        lastObj = next;
+                        // console.log('set child to valid', type, relation);
+                        let a = this.toMany<T>(type, next, relation, options)
+                        // console.log('OBJ to MANY - lets set child', w.depth, a);
+                        return setChild(a);
                     } else if (lastObj && !next) {
+                        lastObj = next;
+                        // console.error('OBJ to MANY - set child to null', type, relation);
                         return setChild(null); // TODO: review this call
                     }
+                    lastObj = next;
+                    // console.log('no set child', type, relation);
                 } catch (e) {
+                    // console.error('OBJ to MANY - set child error', type, relation, e);
                     subscriber.error(e)
                 }
-            }, (e) => {subscriber.error(e)}, () => {subscriber.complete()});
+            }, (e) => {console.error('OBJ to MANY - set child error', type, relation, e); subscriber.error(e)}, () => {subscriber.complete()});
         });
+        return w;
     }
 
     normalizeObject(type: string, obj: any, references?: {[relation: string]: any}, options?: any) {

@@ -32,20 +32,22 @@ export class WrapLiveObject<T> extends WrapLiveModel<T, T, LiveObject<T>> implem
         return this.waitForChild().then(() => this.child.delete(options));
     }
     toMany<R>(relation: RelationInput, options?: any): LiveList<R> {
+        console.log('TO MANY', relation);
         return new WrapLiveList<R>((setList, subscriber: Subscriber<any>): TeardownLogic => {
             return this.childObservable.subscribe(() => {
                 try {
                     if (this.child) {
                         setList(this.child.toMany(relation, options));
                     } else {
-                        console.error('no child after child observable');
+                        console.error('TO MANY - no child after child observable');
                         subscriber.next([]);
                     }
                 } catch (e) {
+                    console.error('TO MANY - sub error', e);
                     subscriber.error(e)
                 }
-            }, (e) => {subscriber.error(e)}, () => {subscriber.complete()});
-        })
+            }, (e) => {console.error('TO MANY - error', e);subscriber.error(e)}, () => {subscriber.complete()});
+        }, this.depth + 1)
     }
     toOne<R>(relation: string, options?: any): LiveObject<R> {
         return new WrapLiveObject<R>((setObj, subscriber) => {
@@ -61,7 +63,7 @@ export class WrapLiveObject<T> extends WrapLiveModel<T, T, LiveObject<T>> implem
                     subscriber.error(e)
                 }
             }, (e) => {subscriber.error(e)}, () => {subscriber.complete()});
-        });
+        }, this.depth + 1);
     }
 
     createIfNone(create: () => Promise<T>): LiveObject<T> {
@@ -75,7 +77,7 @@ export class WrapLiveObject<T> extends WrapLiveModel<T, T, LiveObject<T>> implem
                     subscriber.error(e)
                 }
             }, (e) => {subscriber.error(e)}, () => {subscriber.complete()});
-        });
+        }, this.depth + 1);
     }
 
 }
@@ -86,7 +88,10 @@ export class WrapLiveList<T> extends WrapLiveModel<T[], T, LiveList<T>> implemen
         if (this.child) {
             return this.child.liveObjects;
         } else {
-            return Observable.of([]);
+            return new Observable((sub) => {
+                sub.next([]);
+                sub.complete();
+            });
         }
     });
 
@@ -109,9 +114,28 @@ export class WrapLiveList<T> extends WrapLiveModel<T[], T, LiveList<T>> implemen
     }
     add(obj: T, extra?: any, options?: any): Promise<any> {
         if (this.child) {
+            console.log('WRAP ADD', this.depth, obj);
             return this.child.add(obj, extra, options);
         }
-        return this.waitForChild().then(() => this.child.add(obj, extra, options));
+        var hasChild = false;
+        console.log('WRAP ADD (waiting)', this.depth, obj);
+        let p = this.waitForChild().then(() => {
+            hasChild = true;
+            console.log('GOT WAITING CHILD!', this.depth, obj)
+            return this.child.add(obj, extra, options)
+        }, (e) => {
+            console.error('GOT ERROR ON CHILD', this.depth, e);
+            throw e;
+        });
+        console.log('set timeout', this.depth);
+        setTimeout(() => {
+            if (!hasChild && this.child) {
+                console.error('WE GOT A CHILD, BUT THE PROMISE DIDNT RESOLVE!!!!');
+            } else {
+                console.warn('everything normal here', this.depth, hasChild, this);
+            }
+        }, 2000);
+        return p;
     }
     save(obj?: T, options?: any): Promise<any> {
         if (this.child) {
@@ -151,7 +175,7 @@ export class WrapLiveList<T> extends WrapLiveModel<T[], T, LiveList<T>> implemen
                     subscriber.error(e)
                 }
             }, e => subscriber.error(e));
-        });
+        }, this.depth + 1);
     }
     toId(id: string, options?: any): LiveObject<T> {
         return new WrapLiveObject<T>((setObj, subscriber) => {
@@ -167,6 +191,6 @@ export class WrapLiveList<T> extends WrapLiveModel<T[], T, LiveList<T>> implemen
                     subscriber.error(e)
                 }
             }, e => subscriber.error(e));
-        });
+        }, this.depth + 1);
     }
 }

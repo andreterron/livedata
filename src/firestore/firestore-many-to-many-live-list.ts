@@ -21,44 +21,44 @@ export class FirestoreManyToManyLiveList<T> extends BaseLiveList<T> {
             public reverseRelation: RelationSide,
             public options?: any) {
         super(dataManager, type, {subscribeOnce: (subscriber): TeardownLogic => {
-            return this.edgeQuery().onSnapshot({
-                next: (snapshot) => {
-                    this.lastEdges = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
-                    if (this.relation.indexField) {
-                        this.nextIndex = 1 + this.lastEdges.map(e => e[this.relation.indexField]).reduce((prev, curr) => Math.max(prev, curr), this.nextIndex);
-                    }
-                    Observable.combineLatest(snapshot.docs.map((doc): Observable<T> => {
-                        return new Observable<T>((sub) => {
-                            if (doc.exists) {
-                                doc.data()[this.reverseRelation.foreignField].onSnapshot({
-                                    next: (snap: firestore.DocumentSnapshot) => {
-                                        sub.next(Object.assign({id: snap.id}, snap.data() as T));
-                                    },
-                                    error: (e) => {
-                                        // console.error('ACL - ERROR', this.creating, e.code);
-                                        // if (e.code !== 'permission-denied') {
-                                        //     console.error('ACL - edge obj error', doc.id, doc.data());
-                                        //     console.error(e);
-                                        sub.error(e);
-                                        // } else {
-                                        //     console.log('got err');
-                                        // }
-                                    },
-                                    complete: () => sub.complete()
-                                });
-                            } else {
-                                sub.next(null);
-                            }
-                        });
-                    })).subscribe(n => {
-                        subscriber.next(n)
-                    }, e => {subscriber.error(e)}, () => {
-                        subscriber.next([]);
-                    });
-                },
-                error: e => {subscriber.error(e)},
-                complete: () => {subscriber.complete()}
-            });
+            // return this.edgeQuery().onSnapshot({
+            //     next: (snapshot) => {
+            //         this.lastEdges = snapshot.docs.map(d => ({id: d.id, ...d.data()}));
+            //         if (this.relation.indexField) {
+            //             this.nextIndex = 1 + this.lastEdges.map(e => e[this.relation.indexField]).reduce((prev, curr) => Math.max(prev, curr), this.nextIndex);
+            //         }
+            //         Observable.combineLatest(snapshot.docs.map((doc): Observable<T> => {
+            //             return new Observable<T>((sub) => {
+            //                 if (doc.exists) {
+            //                     doc.data()[this.reverseRelation.foreignField].onSnapshot({
+            //                         next: (snap: firestore.DocumentSnapshot) => {
+            //                             sub.next(Object.assign({id: snap.id}, snap.data() as T));
+            //                         },
+            //                         error: (e) => {
+            //                             // console.error('ACL - ERROR', this.creating, e.code);
+            //                             // if (e.code !== 'permission-denied') {
+            //                             //     console.error('ACL - edge obj error', doc.id, doc.data());
+            //                             //     console.error(e);
+            //                             sub.error(e);
+            //                             // } else {
+            //                             //     console.log('got err');
+            //                             // }
+            //                         },
+            //                         complete: () => sub.complete()
+            //                     });
+            //                 } else {
+            //                     sub.next(null);
+            //                 }
+            //             });
+            //         })).subscribe(n => {
+            //             subscriber.next(n)
+            //         }, e => {subscriber.error(e)}, () => {
+            //             subscriber.next([]);
+            //         });
+            //     },
+            //     error: e => {subscriber.error(e)},
+            //     complete: () => {subscriber.complete()}
+            // });
         }});
     }
 

@@ -3,6 +3,7 @@ export interface RelationSide {
     from?: 'one' | 'many' | 'ref',
     type?: string,
     name?: string,
+    plural?: string,
     reverseName?: string, // Used for input only, don't rely on it
 
     method?: string; // edge?, foreignKey?, array?, object?, sub-collection?
@@ -48,6 +49,7 @@ export interface RelationsDefinition {
 
 export interface RelationDefinition {
     name: string
+    plural?: string,
     reverseName?: string
 
     to: 'one' | 'many' | 'ref'
@@ -62,6 +64,8 @@ export interface RelationDefinition {
         name: string
         localKey: string
         localField: string
+        foreignKey: string
+        foreignField: string
     }
 
     indexField?: string
@@ -84,6 +88,7 @@ export interface RelationPartial extends RelationInputObject {
 
 export interface RelationInputObject {
     name?: string
+    plural?: string,
     reverseName?: string
 
     to?: 'one' | 'many' | 'ref'
